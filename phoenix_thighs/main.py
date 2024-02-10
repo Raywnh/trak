@@ -1,19 +1,27 @@
 import cv2
 import image_process as imgr
 import mouse_movement as mov
-import pyautogui
 import queue
 import threading
+import serial
+import time
+
+arduino = serial.Serial('COM7', 9600, timeout=0.1)
+time.sleep(2)
 
 frameQueue = queue.Queue()
 resultQueue = queue.Queue()
-# mouseQueue = queue.Queue()
+mouseQueue = queue.Queue()
 
-# def mouse_thread():
-#     while True:
-#         if not mouseQueue.empty():
-#             x, y = mouseQueue.get()
-#             # pyautogui.moveTo(x, y)
+def mouse_thread():
+    while True:
+        pos = mouseQueue.get()
+        if pos:
+            x, y = pos
+            coords = "{},{}\n".format(x, y)
+            print(coords)
+            arduino.write(coords.encode())
+        
         
 def capture_thread(cap):
     while True:
@@ -35,10 +43,12 @@ def process_thread():
 cap = cv2.VideoCapture(0)
 cap.set(cv2.CAP_PROP_FPS, 120)
 smoothCursor = mov.SmoothCursor(window_size=5)
+prev_x = None
+prev_y = None
 
 t1 = threading.Thread(target=capture_thread, args=(cap, ), daemon=True)
 t2 = threading.Thread(target=process_thread, args=(), daemon=True)
-# t3 = threading.Thread(target=mouse_thread, args=(), daemon=True)
+t3 = threading.Thread(target=mouse_thread, args=(), daemon=True)
 
 t1.start()
 t2.start()
@@ -54,10 +64,20 @@ while True:
         if pos:
             x, y = pos
             
-            scaled_x = x * (1920 / 640)
-            scaled_y = y * (1080 / 480)
-            # smoothCursor.add_position((scaled_x, scaled_y))
-            # mouseQueue.put(smoothCursor.get_smoothed_position())
+            scaled_x = (x / 640) * 1920
+            scaled_y = (y / 480) * 1080
+            
+            smoothCursor.add_position((scaled_x, scaled_y))
+            smooth_position = smoothCursor.get_smoothed_position()
+            smooth_x, smooth_y = smooth_position
+            
+            if prev_x is not None and prev_y is not None:
+               move_x = scaled_x - prev_x
+               move_y = scaled_y - prev_y
+               mouseQueue.put((move_x, move_y))
+                
+            prev_x = scaled_x
+            prev_y = scaled_y
 
             cv2.drawContours(frame, [contour], -1, (0, 255, 0), 3)
             cv2.circle(frame, (x, y), 5, (255, 0, 0), -1)
@@ -65,7 +85,7 @@ while True:
         cv2.imshow('frame', frame)
         
 cap.release()
-cv2.destroyAllWindows
+cv2.destroyAllWindows()
 t1.join()
 t2.join()
-# t3.join()
+t3.join()
