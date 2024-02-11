@@ -3,7 +3,7 @@ import image_process as imgr
 import mouse_movement as mov
 import pyautogui
 face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(1)
 cap.set(cv2.CAP_PROP_FPS, 120)
 smoothCursor = mov.SmoothCursor(window_size=5)
 
@@ -16,12 +16,12 @@ while True:
 
     adjusted_frame = cv2.flip(frame, 1)
     # Facial
-    gray = cv2.cvtColor(adjusted_frame, cv2.COLOR_BGR2GRAY)
-    faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(40, 40))
-    for (x, y, w, h) in faces:
-        cv2.rectangle(adjusted_frame, (x, y), (x+w, y+h), (255, 0, 0), 2)
+    # gray = cv2.cvtColor(adjusted_frame, cv2.COLOR_BGR2GRAY)
+    # faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(40, 40))
+    # for (x, y, w, h) in faces:
+    #     cv2.rectangle(adjusted_frame, (x, y), (x+w, y+h), (255, 0, 0), 2)
     # 2. Red Object Detection
-    # pos, contour = imgr.detect_colored_object(adjusted_frame)
+    adjusted_frame = imgr.detect_colored_object(adjusted_frame)
     
     # if pos:
     #     x, y = pos
