@@ -39,9 +39,9 @@ def process_thread():
         pos, centroid = imgr.detect_colored_object(frame)
         resultQueue.put((pos, centroid, frame))
 
-cap = cv2.VideoCapture(1)
+cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
 cap.set(cv2.CAP_PROP_FPS, 60)
-time.sleep(2)
+# time.sleep(2)
   
 smoothCursor = mov.SmoothCursor(window_size=5)
 prev_x = None
@@ -99,4 +99,4 @@ cv2.destroyAllWindows()
 
 t1.join()
 t2.join()
-t3.join()
+# t3.join()

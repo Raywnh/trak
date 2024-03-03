@@ -67,27 +67,3 @@ class ExponentialMovingAverage:
         
             self.prev_center = (smoothed_x, smoothed_y, smoothed_w, smoothed_h)
             return BoundingBox(smoothed_x, smoothed_y, smoothed_w, smoothed_h)
-    
-class KalmanFilter:
-    def __init__(self, process_noise_cov=1e-2, measurement_noise_cov=1e-1, error_cov_post=0.1):
-        # State - what it tracks (4 elements -> x, y, x velocity, y velocity but measure only 2 elements - x, y)
-        self.kalman_filter = cv2.KalmanFilter(4, 2) 
-        # How to map measurements to state model (only measuring x and y positions, not velocities)
-        self.kalman_filter.measurementMatrix = np.array([[1, 0, 0, 0], [0, 1, 0, 0]], np.float32)
-        # Models how object moves from one state to the next (this matrix says next state depends on current position and velocity)
-        self.kalman_filter.transitionMatrix = np.array([[1, 0, 1, 0], [0, 1, 0, 1], [0, 0, 1, 0], [0, 0, 0, 1]], np.float32)
-        # How much noise to expect in object motion, higher means expect more random movement
-        self.kalman_filter.processNoiseCov = process_noise_cov * np.eye(4, dtype=np.float32)
-        # How much noise to expect in measruements, more means less confident in measurements
-        self.kalman_filter.measurementNoiseCov = measurement_noise_cov * np.eye(2, dtype=np.float32)
-        # Initial guess of how accurate state estimate is, higher number means less sure about initial position and velocity estimates
-        self.kalman_filter.errorCovPost = error_cov_post * np.eye(8, dtype=np.float32)
-    
-  
-    def predict(self, x, y):
-        positions = np.array([[np.float32(x)], [np.float32(y)]])
-        # Updating estimates of object position and  velocity
-        self.kalman_filter.correct(positions)
-        # Predicts using measurements and estimates
-        prediction = self.kalman_filter.predict()
-        return int(prediction[0]), int(prediction[1])
